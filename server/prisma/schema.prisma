@@ -1,0 +1,54 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Device {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ip        String   @unique
+  type      String
+  status    String   @default("unknown")
+  lastPing  DateTime?
+  latency   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pings     PingLog[]
+  services  Service[]
+}
+
+model PingLog {
+  id        Int      @id @default(autoincrement())
+  deviceId  Int
+  device    Device   @relation(fields: [deviceId], references: [id])
+  status    String
+  latency   Int?
+  createdAt DateTime @default(now())
+}
+
+model Service {
+  id        Int          @id @default(autoincrement())
+  name      String
+  type      String       // "tcp" or "http"
+  port      Int?
+  url       String?
+  status    String       @default("unknown") // "up", "down", "unknown"
+  deviceId  Int
+  device    Device       @relation(fields: [deviceId], references: [id])
+  logs      ServiceLog[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model ServiceLog {
+  id        Int      @id @default(autoincrement())
+  serviceId Int
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  status    String
+  latency   Int?
+  createdAt DateTime @default(now())
+}
